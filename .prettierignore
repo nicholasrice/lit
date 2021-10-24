@@ -120,7 +120,11 @@ packages/labs/motion/node_modules/
 packages/labs/motion/index.*
 packages/labs/motion/animate.*
 packages/labs/motion/position.*
+packages/labs/motion/spring.*
 packages/labs/motion/animate-controller.*
+packages/labs/motion/demo/*.d.ts
+packages/labs/motion/demo/*.d.ts.map
+
 packages/labs/react/development/
 packages/labs/react/test/
 packages/labs/react/node_modules/

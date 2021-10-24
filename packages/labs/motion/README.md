@@ -14,8 +14,8 @@ $ npm install @lit-labs/motion
 
 The `animate` directive can be used to animate DOM elements from one lit render
 to the next. If the `animate` element changes state between renders, the directive
-performs a "tweening" animation between the two states based on the options given. 
-In addition, elements can animate when they initially render to DOM and when they 
+performs a "tweening" animation between the two states based on the options given.
+In addition, elements can animate when they initially render to DOM and when they
 are removed.
 
 The directive supports a number of options:
@@ -37,11 +37,11 @@ The directive supports a number of options:
 
 ### How it works
 
-The directive uses the FLIP animation technique--derived from First, Last, Invert, 
-Play. This describes how the directive works. It measures the styling of the `animate` 
-element before a layout change (first) and after a layout change (last). Then it 
-inverts the last layout such that it matches the first layout. Finally it plays an 
-animation which removes the inverted layout such that the element animates to the 
+The directive uses the FLIP animation technique--derived from First, Last, Invert,
+Play. This describes how the directive works. It measures the styling of the `animate`
+element before a layout change (first) and after a layout change (last). Then it
+inverts the last layout such that it matches the first layout. Finally it plays an
+animation which removes the inverted layout such that the element animates to the
 "last" layout. See the [FLIP article by Paul Lewis](https://aerotwist.com/blog/flip-your-animations/)
 for more information about the technique.
 
@@ -109,6 +109,45 @@ animate controller has properties which reflect the state of the `animate` anima
 in the host element: `isPlaying` returns true if any `animate`'s are
 currently playing; `isAnimating` returns true if any `animate`s currently have
 animations (which may be paused).
+
+## Spring and Spring2D controllers
+
+The Spring and Spring2D controllers simulate physical springs with the [Wobble](https://github.com/skevy/wobble) library.
+
+When using a spring controller you'll typically set the `fromPosition` and/or `toPosition` and use `currentPosition` in your render method.
+
+```ts
+@customElement('goo-element')
+export class GooElement extends LitElement {
+  // Both the MouseController and SpringController2D will
+  // trigger a render when the mouse moves or the spring updates
+  _mouse = new MouseController(this);
+  _spring1 = new SpringController2D(this, fast);
+
+  render() {
+    // Set the spring to go to the mouse
+    this._spring1.toPosition = this._mouse.position;
+
+    // Position a div based on the current position of the spring.
+    return html`
+      <div
+        class="b1"
+        style=${positionStyle(this._spring3.currentPosition)}
+      ></div>
+    `;
+  }
+}
+
+const fast = {
+  stiffness: 1200,
+  damping: 400,
+};
+
+const positionStyle = ({x, y}: Position2D) =>
+  styleMap({
+    transform: `translate3d(${x}px,${y}px,0) translate3d(-50%,-50%,0)`,
+  });
+```
 
 ## Contributing
 
