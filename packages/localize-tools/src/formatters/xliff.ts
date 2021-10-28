@@ -11,7 +11,7 @@ import type {Config} from '../types/config.js';
 import type {XliffConfig} from '../types/formatters.js';
 import type {Locale} from '../types/locale.js';
 import {Formatter} from './index.js';
-import {KnownError} from '../error.js';
+import {KnownError, unreachable} from '../error.js';
 import {
   Bundle,
   Message,
@@ -110,7 +110,7 @@ export class XliffFormatter implements Formatter {
           contents.push(child.nodeValue || '');
         } else if (
           child.nodeType === doc.ELEMENT_NODE &&
-          child.nodeName === 'ph'
+          (child.nodeName === 'x' || child.nodeName === 'ph')
         ) {
           const phText = child.childNodes[0];
           if (
@@ -118,7 +118,9 @@ export class XliffFormatter implements Formatter {
             !phText ||
             phText.nodeType !== doc.TEXT_NODE
           ) {
-            throw new KnownError(`Expected <ph> to have exactly one text node`);
+            throw new KnownError(
+              `Expected <${child.nodeName}> to have exactly one text node`
+            );
           }
           contents.push({untranslatable: phText.nodeValue || ''});
         } else {
@@ -205,8 +207,8 @@ export class XliffFormatter implements Formatter {
     // TODO The spec requires the source filename in the "original" attribute,
     // but we don't currently track filenames.
     file.setAttribute('original', 'lit-localize-inputs');
-    // Plaintext seems right, as opposed to HTML, since our translatable
-    // message text is just text, and all HTML markup is encoded into <ph>
+    // Plaintext seems right, as opposed to HTML, since our translatable message
+    // text is just text, and all HTML markup is encoded into <x> or <ph>
     // elements.
     file.setAttribute('datatype', 'plaintext');
     indent(file);
@@ -263,6 +265,25 @@ export class XliffFormatter implements Formatter {
    * Encode the given message contents in XLIFF format.
    */
   private encodeContents(doc: Document, contents: Message['contents']): Node[] {
+    let phTag;
+    switch (this.xliffConfig.placeholderStyle) {
+      case undefined: // Default
+      case 'x': {
+        phTag = 'x';
+        break;
+      }
+      case 'ph': {
+        phTag = 'ph';
+        break;
+      }
+      default: {
+        throw new Error(
+          `Internal error: unknown xliff placeholderStyle: ${unreachable(
+            this.xliffConfig.placeholderStyle
+          )}`
+        );
+      }
+    }
     const nodes = [];
     // We need a unique ID within each source for each placeholder. The index
     // will do.
@@ -273,7 +294,7 @@ export class XliffFormatter implements Formatter {
       } else {
         const {untranslatable} = content;
         // https://docs.oasis-open.org/xliff/v1.2/os/xliff-core.html#ph
-        const ph = doc.createElement('ph');
+        const ph = doc.createElement(phTag);
         ph.setAttribute('id', String(phIdx++));
         ph.appendChild(doc.createTextNode(untranslatable));
         nodes.push(ph);
